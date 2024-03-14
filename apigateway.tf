@@ -1,18 +1,18 @@
 resource "aws)api_gateway_rest_api" "api_gateway" {
- name = "DynamoDBOperations"
+  name = "DynamoDBOperations"
 }
 
 resource "aws_api_gateway_resource" "resource" {
   rest_api_id = api_gateway_rest_api.api_gateway.id
-  parent_id = api_gateway_rest_api.api_gateway.root_resource_id
-  path_part = "DynamoDBManager"
+  parent_id   = api_gateway_rest_api.api_gateway.root_resource_id
+  path_part   = "DynamoDBManager"
 }
 
 resource "aws_api_gateway_method" "method" {
- rest_api_id = api_gateway_rest_api.api_gateway.id
- resource_id = aws_api_gateway_resource.resource.id
- http_method = "POST"
- authorization = "NONE"
+  rest_api_id   = api_gateway_rest_api.api_gateway.id
+  resource_id   = aws_api_gateway_resource.resource.id
+  http_method   = "POST"
+  authorization = "NONE"
 }
 
 resource "aws_api_gateway_integration" "integration" {
