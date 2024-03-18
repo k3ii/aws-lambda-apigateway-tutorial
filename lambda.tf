@@ -1,11 +1,9 @@
-resource "aws_iam_policy" "lambda_policy" {
+resource "aws_iam_policy" "lambda_apigateway_policy" {
   name = "lambda-apigateway-policy"
-
   policy = jsonencode({
     "Version" : "2012-10-17",
     "Statement" : [
       {
-        "Sid" : "Stmt1428341300017",
         "Action" : [
           "dynamodb:DeleteItem",
           "dynamodb:GetItem",
@@ -18,20 +16,19 @@ resource "aws_iam_policy" "lambda_policy" {
         "Resource" : "*"
       },
       {
-        "Sid" : "",
-        "Resource" : "*",
         "Action" : [
           "logs:CreateLogGroup",
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ],
         "Effect" : "Allow"
+        "Resource" : "*",
       }
     ]
   })
 }
 
-resource "aws_iam_role" "lambda_role" {
+resource "aws_iam_role" "lambda_execution_role" {
   name = "lambda-apigateway-role"
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -47,22 +44,22 @@ resource "aws_iam_role" "lambda_role" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "lambda_attach" {
-  role       = aws_iam_role.lambda_role.name
-  policy_arn = aws_iam_policy.lambda_policy.arn
+resource "aws_iam_role_policy_attachment" "lambda_policy_attach" {
+  role       = aws_iam_role.lambda_execution_role.name
+  policy_arn = aws_iam_policy.lambda_apigateway_policy.arn
 }
 
-data "archive_file" "lambda_function" {
+data "archive_file" "lambda_zip" {
   type        = "zip"
   source_file = "LambdaFunctionOverHttps.py"
   output_path = "function.zip"
 }
 
-resource "aws_lambda_function" "LambdaFunctionOverHttps" {
+resource "aws_lambda_function" "lambda_function_over_https" {
   function_name    = "LambdaFunctionOverHttps"
-  handler          = "handler"
-  role             = aws_iam_role.lambda_role.arn
+  handler          = "LambdaFunctionOverHttps.handler"
+  filename         = data.archive_file.lambda_zip.output_path
+  source_code_hash = data.archive_file.lambda_zip.output_base64sha256
+  role             = aws_iam_role.lambda_execution_role.arn
   runtime          = "python3.9"
-  filename         = data.archive_file.lambda_function.output_path
-  source_code_hash = data.archive_file.function.output_base64sha256
 }
